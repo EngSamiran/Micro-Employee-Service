@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: employee-service
+  datasource:    url: jdbc:postgresql://<address>:<port number>/<schema name>
+    username: <user name>
+    password: <password>
+    driver-class-name: org.postgresql.Driver
+    hikari:      maximum-pool-size: 2
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect    show-sql: true
+    open-in-view: false
+    hibernate:      ddl-auto: update
+      
+server:  port: 8081
+  servlet:    context-path: /employee-app/api
+  
+eureka:  client:    service-url:
+      defaultZone: http://localhost:5000/eureka/
+      
+management:  endpoints:    web:      exposure:         include: health
+  health:    circuitbreakers:      enabled: true
+  info:    env:      enabled: true
+        endpoint:    health:      show-details: always
+      
+resilience4j:
+  circuitbreaker:    instances:
+      AddressEducationBreaker:
+        register-health-indicator: true
+        event-consumer-buffer-size: 10  
+        failure-rate-threshold: 50   #When the failure rate is equal or greater than the threshold % the CircuitBreaker transitions to open and starts short-circuiting calls.
+        minimum-number-of-calls: 5   #If minimumNumberOfCalls is 10, then at least 10 calls must be recorded, before the failure rate can be calculated.
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 6s   #when state status open then how much time to waite for goto half-open state
+        permitted-number-of-calls-in-half-open-state: 3   #maximum number of call to allow half-open state, then check maximum no. of success and fail rate to go CLOSE or again HALF-OPEN state
+        sliding-window-size: 10
+        sliding-window-type: count-based
+  retry:    instances:      AddressEducationRetry:
+        max-attempts: 3
+        wait-duration: 5s
+        
+  ratelimiter:    instances:      employeeRateLimiter:
+        limit-refresh-period: 10s
+        limit-for-period: 10
+        timeout-duration: 5s                
+      
+info:
+  app:
+    name: Employee Service
+    version: 1.0.0
+    description: This service only serve employee information
+      
+
+            
+     
